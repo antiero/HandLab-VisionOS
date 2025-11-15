@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		EDE27E4F2EC87ABB00BADE3B /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = EDE27E4E2EC87ABB00BADE3B /* RealityKitContent */; };
+		EDE27E652EC87AE000BADE3B /* VisionHandKit in Frameworks */ = {isa = PBXBuildFile; productRef = EDE27E642EC87AE000BADE3B /* VisionHandKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EDE27E652EC87AE000BADE3B /* VisionHandKit in Frameworks */,
 				EDE27E4F2EC87ABB00BADE3B /* RealityKitContent in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -94,6 +96,7 @@
 			name = HandLab;
 			packageProductDependencies = (
 				EDE27E4E2EC87ABB00BADE3B /* RealityKitContent */,
+				EDE27E642EC87AE000BADE3B /* VisionHandKit */,
 			);
 			productName = HandLab;
 			productReference = EDE27E492EC87ABB00BADE3B /* HandLab.app */;
@@ -123,6 +126,9 @@
 			);
 			mainGroup = EDE27E402EC87ABB00BADE3B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EDE27E632EC87AE000BADE3B /* XCLocalSwiftPackageReference "../../../Downloads/VisionHandKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EDE27E4A2EC87ABB00BADE3B /* Products */;
 			projectDirPath = "";
@@ -165,6 +171,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_KEY_NSHandsTrackingUsageDescription = "Allow Hand Tracking?";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -180,6 +187,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
 		};
@@ -194,6 +202,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
+				INFOPLIST_KEY_NSHandsTrackingUsageDescription = "Allow Hand Tracking?";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -209,6 +218,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
@@ -356,10 +366,21 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		EDE27E632EC87AE000BADE3B /* XCLocalSwiftPackageReference "../../../Downloads/VisionHandKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../Downloads/VisionHandKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		EDE27E4E2EC87ABB00BADE3B /* RealityKitContent */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RealityKitContent;
+		};
+		EDE27E642EC87AE000BADE3B /* VisionHandKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VisionHandKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
