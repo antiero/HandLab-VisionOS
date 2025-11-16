@@ -15,8 +15,14 @@ import VisionHandKit
 final class DebugHandsEntity: Entity {
 
     enum Mode {
-        case anchored     // hands stay centred in the panel
-        case follow       // hands move around in the panel volume
+        case anchored     // hands stay centred in their own panel
+        case follow       // hands move in a volume
+    }
+
+    /// Whether left/right hands should preserve their real-world proximity
+    /// instead of being artificially separated.
+    var absolutePositions: Bool = false {
+        didSet { updateChildOffsets() }
     }
 
     var mode: Mode = .anchored {
@@ -33,15 +39,29 @@ final class DebugHandsEntity: Entity {
     /// World-space origin used in follow mode.
     private var followOrigin: SIMD3<Float>?
 
+    /// How far apart to place the two hands in non-absolute follow mode.
+    private let handSpacing: Float = 0.08
+
     required init() {
         super.init()
 
-        // Arrange the two debug hands next to each other in local space.
-        leftDebugHand.position = SIMD3<Float>(-0.08, 0, 0)
-        rightDebugHand.position = SIMD3<Float>(0.08, 0, 0)
-
         addChild(leftDebugHand)
         addChild(rightDebugHand)
+
+        updateChildOffsets()
+    }
+
+    /// Update offsets when we toggle absolutePositions.
+    private func updateChildOffsets() {
+        if absolutePositions {
+            // Both hands share the same local origin: relative positions preserved.
+            leftDebugHand.position = .zero
+            rightDebugHand.position = .zero
+        } else {
+            // Slight separation for readability.
+            leftDebugHand.position = SIMD3<Float>(-handSpacing, 0, 0)
+            rightDebugHand.position = SIMD3<Float>(handSpacing, 0, 0)
+        }
     }
 
     /// Update the debug visual from the latest frame.

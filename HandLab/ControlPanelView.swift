@@ -27,6 +27,12 @@ struct ControlPanelView: View {
                    isOn: $debugModel.followTranslation)
                 .toggleStyle(.switch)
 
+            Toggle("Absolute world positions (preserve proximity)",
+                   isOn: $debugModel.absolutePositions)
+                .toggleStyle(.switch)
+                .disabled(!debugModel.followTranslation)
+                .opacity(debugModel.followTranslation ? 1.0 : 0.4)
+
             Divider()
                 .padding(.vertical, 8)
 
@@ -54,6 +60,10 @@ struct ControlPanelView: View {
             Spacer()
         }
         .padding(24)
-        .frame(idealWidth: 420, idealHeight: 320)
+        .frame(idealWidth: 420, idealHeight: 340)
     }
+}
+#Preview {
+    ControlPanelView()
+        .environmentObject(HandDebugModel())
 }

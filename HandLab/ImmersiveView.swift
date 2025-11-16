@@ -14,38 +14,34 @@ import VisionHandKit
 struct ImmersiveView: View {
     @EnvironmentObject var debugModel: HandDebugModel
 
-    // We own a single debug entity instance and add it to the scene once.
     @State private var debugHandsEntity = DebugHandsEntity()
 
     var body: some View {
         RealityView { content in
-            // Main test entity (optional)
             let sphere = ModelEntity(mesh: .generateSphere(radius: 0.01))
             sphere.position = [0, 1, -0.5]
             content.add(sphere)
 
-            // Add our persistent debug entity
             debugHandsEntity.name = "HandDebugPanel"
-            debugHandsEntity.position = SIMD3<Float>(0, 0.8, -0.8) // in front of user
+            debugHandsEntity.position = SIMD3<Float>(0, 1, -0.6)
             content.add(debugHandsEntity)
 
         } update: { _ in
-            // We no longer rely on this for frame updates.
-            // RealityKit will still tick physics/rendering as needed.
+            // no-op; we drive updates via Combine
         }
         .task {
-            // Start hand tracking whenever the immersive space is active.
             do {
                 try await debugModel.hands.run()
             } catch {
                 print("Hand tracking failed: \(error)")
             }
         }
-        // React to followTranslation changes from the window control panel.
         .onReceive(debugModel.$followTranslation) { follow in
             debugHandsEntity.mode = follow ? .follow : .anchored
         }
-        // Drive the tiny hand rig directly from the incoming frames.
+        .onReceive(debugModel.$absolutePositions) { absolute in
+            debugHandsEntity.absolutePositions = absolute
+        }
         .onReceive(debugModel.hands.$latestFrame.compactMap { $0 }) { frame in
             debugHandsEntity.update(with: frame)
         }
@@ -53,7 +49,8 @@ struct ImmersiveView: View {
 }
 
 
+
 #Preview(immersionStyle: .mixed) {
     ImmersiveView()
-        .environment(AppModel())
+        .environmentObject(HandDebugModel())
 }
