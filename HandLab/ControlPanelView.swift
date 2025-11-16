@@ -33,6 +33,23 @@ struct ControlPanelView: View {
                 .disabled(!debugModel.followTranslation)
                 .opacity(debugModel.followTranslation ? 1.0 : 0.4)
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Hand Colors")
+                    .font(.headline)
+
+                ColorPicker("Left hand joints",
+                            selection: $debugModel.leftHandColor,
+                            supportsOpacity: false)
+
+                ColorPicker("Right hand joints",
+                            selection: $debugModel.rightHandColor,
+                            supportsOpacity: false)
+
+                ColorPicker("Bone cylinders",
+                            selection: $debugModel.boneColor,
+                            supportsOpacity: false)
+            }
+
             Divider()
                 .padding(.vertical, 8)
 
@@ -60,9 +77,11 @@ struct ControlPanelView: View {
             Spacer()
         }
         .padding(24)
-        .frame(idealWidth: 420, idealHeight: 340)
+        .frame(idealWidth: 420, idealHeight: 460)
     }
 }
+
+
 #Preview {
     ControlPanelView()
         .environmentObject(HandDebugModel())

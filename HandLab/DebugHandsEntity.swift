@@ -10,8 +10,9 @@ import RealityKit
 import ARKit
 import simd
 import VisionHandKit
+import UIKit
 
-/// Root entity that holds visualizers for left + right hands, side by side.
+/// Root entity that holds visualizers for left + right hands.
 final class DebugHandsEntity: Entity {
 
     enum Mode {
@@ -19,8 +20,7 @@ final class DebugHandsEntity: Entity {
         case follow       // hands move in a volume
     }
 
-    /// Whether left/right hands should preserve their real-world proximity
-    /// instead of being artificially separated.
+    /// Whether left/right hands should preserve their real-world proximity.
     var absolutePositions: Bool = false {
         didSet { updateChildOffsets() }
     }
@@ -33,8 +33,8 @@ final class DebugHandsEntity: Entity {
         }
     }
 
-    private let leftDebugHand = DebugHandEntity(label: "L")
-    private let rightDebugHand = DebugHandEntity(label: "R")
+    private let leftDebugHand: DebugHandEntity
+    private let rightDebugHand: DebugHandEntity
 
     /// World-space origin used in follow mode.
     private var followOrigin: SIMD3<Float>?
@@ -42,7 +42,19 @@ final class DebugHandsEntity: Entity {
     /// How far apart to place the two hands in non-absolute follow mode.
     private let handSpacing: Float = 0.08
 
+    // Default Ultraleap-esque colors
+    private var leftJointColor: UIColor = .systemBlue
+    private var rightJointColor: UIColor = .systemRed
+    private var boneColor: UIColor = .white
+
     required init() {
+        leftDebugHand = DebugHandEntity(label: "L",
+                                        jointColor: leftJointColor,
+                                        boneColor: boneColor)
+        rightDebugHand = DebugHandEntity(label: "R",
+                                         jointColor: rightJointColor,
+                                         boneColor: boneColor)
+
         super.init()
 
         addChild(leftDebugHand)
@@ -54,19 +66,35 @@ final class DebugHandsEntity: Entity {
     /// Update offsets when we toggle absolutePositions.
     private func updateChildOffsets() {
         if absolutePositions {
-            // Both hands share the same local origin: relative positions preserved.
             leftDebugHand.position = .zero
             rightDebugHand.position = .zero
         } else {
-            // Slight separation for readability.
             leftDebugHand.position = SIMD3<Float>(-handSpacing, 0, 0)
             rightDebugHand.position = SIMD3<Float>(handSpacing, 0, 0)
         }
     }
 
+    /// Set left-hand joint color.
+    func setLeftHandColor(_ color: UIColor) {
+        leftJointColor = color
+        leftDebugHand.updateJointColor(color)
+    }
+
+    /// Set right-hand joint color.
+    func setRightHandColor(_ color: UIColor) {
+        rightJointColor = color
+        rightDebugHand.updateJointColor(color)
+    }
+
+    /// Set bone color for both hands.
+    func setBoneColor(_ color: UIColor) {
+        boneColor = color
+        leftDebugHand.updateBoneColor(color)
+        rightDebugHand.updateBoneColor(color)
+    }
+
     /// Update the debug visual from the latest frame.
     func update(with frame: HandFrame) {
-        // In follow mode, lazily pick a world-space origin once.
         if mode == .follow && followOrigin == nil {
             if let l = frame.leftHand?.wristPosition {
                 followOrigin = l
@@ -100,10 +128,7 @@ final class DebugHandsEntity: Entity {
 /// Visualizer for a single hand: joints as spheres, bones as cylinders.
 final class DebugHandEntity: Entity {
 
-    /// Spheres for each joint.
     private var jointSpheres: [HandSkeleton.JointName: ModelEntity] = [:]
-
-    /// Cylinders for each bone (keyed by "from-to" string).
     private var boneEntities: [String: ModelEntity] = [:]
 
     /// Global scale for the miniature hand.
@@ -112,6 +137,10 @@ final class DebugHandEntity: Entity {
     /// Radii for joints and bones.
     private let jointRadius: Float = 0.004
     private let boneRadius: Float = 0.002
+
+    /// Current colors.
+    private var jointColor: UIColor
+    private var boneColor: UIColor
 
     /// All joints we care about.
     private let jointNames: [HandSkeleton.JointName] = [
@@ -151,34 +180,29 @@ final class DebugHandEntity: Entity {
 
     /// Bone connections (pairs of joints).
     private lazy var bonePairs: [(HandSkeleton.JointName, HandSkeleton.JointName)] = [
-        // Thumb chain
         (.wrist, .thumbKnuckle),
         (.thumbKnuckle, .thumbIntermediateBase),
         (.thumbIntermediateBase, .thumbIntermediateTip),
         (.thumbIntermediateTip, .thumbTip),
 
-        // Index chain
         (.wrist, .indexFingerMetacarpal),
         (.indexFingerMetacarpal, .indexFingerKnuckle),
         (.indexFingerKnuckle, .indexFingerIntermediateBase),
         (.indexFingerIntermediateBase, .indexFingerIntermediateTip),
         (.indexFingerIntermediateTip, .indexFingerTip),
 
-        // Middle chain
         (.wrist, .middleFingerMetacarpal),
         (.middleFingerMetacarpal, .middleFingerKnuckle),
         (.middleFingerKnuckle, .middleFingerIntermediateBase),
         (.middleFingerIntermediateBase, .middleFingerIntermediateTip),
         (.middleFingerIntermediateTip, .middleFingerTip),
 
-        // Ring chain
         (.wrist, .ringFingerMetacarpal),
         (.ringFingerMetacarpal, .ringFingerKnuckle),
         (.ringFingerKnuckle, .ringFingerIntermediateBase),
         (.ringFingerIntermediateBase, .ringFingerIntermediateTip),
         (.ringFingerIntermediateTip, .ringFingerTip),
 
-        // Little chain
         (.wrist, .littleFingerMetacarpal),
         (.littleFingerMetacarpal, .littleFingerKnuckle),
         (.littleFingerKnuckle, .littleFingerIntermediateBase),
@@ -188,22 +212,28 @@ final class DebugHandEntity: Entity {
 
     private let label: String
 
-    init(label: String) {
+    init(label: String, jointColor: UIColor, boneColor: UIColor) {
         self.label = label
+        self.jointColor = jointColor
+        self.boneColor = boneColor
         super.init()
         setupGeometry()
     }
 
     required init() {
         self.label = ""
+        self.jointColor = .systemBlue
+        self.boneColor = .white
         super.init()
         setupGeometry()
     }
 
     /// Pre-create all joints and bones so we just move them every frame.
     private func setupGeometry() {
+        let jointMaterial = SimpleMaterial(color: jointColor,
+                                           roughness: 0.3,
+                                           isMetallic: false)
         let jointMesh = MeshResource.generateSphere(radius: jointRadius)
-        let jointMaterial = SimpleMaterial()
 
         for name in jointNames {
             let sphere = ModelEntity(mesh: jointMesh, materials: [jointMaterial])
@@ -213,8 +243,10 @@ final class DebugHandEntity: Entity {
             addChild(sphere)
         }
 
+        let boneMaterial = SimpleMaterial(color: boneColor,
+                                          roughness: 0.5,
+                                          isMetallic: false)
         let boneMesh = MeshResource.generateCylinder(height: 1.0, radius: boneRadius)
-        let boneMaterial = SimpleMaterial()
 
         for (from, to) in bonePairs {
             let key = boneKey(from: from, to: to)
@@ -223,6 +255,28 @@ final class DebugHandEntity: Entity {
             bone.transform = Transform()
             boneEntities[key] = bone
             addChild(bone)
+        }
+    }
+
+    /// Change joint color at runtime.
+    func updateJointColor(_ color: UIColor) {
+        jointColor = color
+        let material = SimpleMaterial(color: color,
+                                      roughness: 0.3,
+                                      isMetallic: false)
+        for sphere in jointSpheres.values {
+            sphere.model?.materials = [material]
+        }
+    }
+
+    /// Change bone color at runtime.
+    func updateBoneColor(_ color: UIColor) {
+        boneColor = color
+        let material = SimpleMaterial(color: color,
+                                      roughness: 0.5,
+                                      isMetallic: false)
+        for bone in boneEntities.values {
+            bone.model?.materials = [material]
         }
     }
 
@@ -237,8 +291,6 @@ final class DebugHandEntity: Entity {
             return
         }
 
-        // Cache joint positions relative to some base world position,
-        // which depends on the mode.
         var localJointPositions: [HandSkeleton.JointName: SIMD3<Float>] = [:]
 
         for (name, sphere) in jointSpheres {
@@ -250,10 +302,8 @@ final class DebugHandEntity: Entity {
             let baseWorld: SIMD3<Float>
             switch mode {
             case .anchored:
-                // Current behaviour: mini-hand centred on its own wrist.
                 baseWorld = wristWorld
             case .follow:
-                // Use a shared origin for both hands, so they translate.
                 baseWorld = followOrigin ?? wristWorld
             }
 
@@ -264,7 +314,6 @@ final class DebugHandEntity: Entity {
             localJointPositions[name] = local
         }
 
-        // Update bones using the local joint positions.
         for (from, to) in bonePairs {
             let key = boneKey(from: from, to: to)
             guard let bone = boneEntities[key],
@@ -284,7 +333,6 @@ final class DebugHandEntity: Entity {
         "\(from)->\(to)"
     }
 
-    /// Position + orient a cylinder (height 1 in local neutral space) between two points.
     private func updateBoneEntity(_ bone: ModelEntity, from a: SIMD3<Float>, to b: SIMD3<Float>) {
         let dir = b - a
         let length = simd_length(dir)
@@ -299,7 +347,6 @@ final class DebugHandEntity: Entity {
         let yAxis = SIMD3<Float>(0, 1, 0)
         let dirNorm = simd_normalize(dir)
 
-        // Rotation from Y axis to direction.
         let dot = simd_dot(yAxis, dirNorm)
         let rotation: simd_quatf
 

@@ -10,6 +10,7 @@ import RealityKit
 import ARKit
 import Combine
 import VisionHandKit
+import UIKit
 
 struct ImmersiveView: View {
     @EnvironmentObject var debugModel: HandDebugModel
@@ -18,12 +19,12 @@ struct ImmersiveView: View {
 
     var body: some View {
         RealityView { content in
-            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.01))
-            sphere.position = [0, 1, -0.5]
+            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.05))
+            sphere.position = [0, 1.0, -0.5]
             content.add(sphere)
 
             debugHandsEntity.name = "HandDebugPanel"
-            debugHandsEntity.position = SIMD3<Float>(0, 1, -0.6)
+            debugHandsEntity.position = SIMD3<Float>(0, 1.0, -0.5)
             content.add(debugHandsEntity)
 
         } update: { _ in
@@ -42,11 +43,21 @@ struct ImmersiveView: View {
         .onReceive(debugModel.$absolutePositions) { absolute in
             debugHandsEntity.absolutePositions = absolute
         }
+        .onReceive(debugModel.$leftHandColor) { color in
+            debugHandsEntity.setLeftHandColor(UIColor(color))
+        }
+        .onReceive(debugModel.$rightHandColor) { color in
+            debugHandsEntity.setRightHandColor(UIColor(color))
+        }
+        .onReceive(debugModel.$boneColor) { color in
+            debugHandsEntity.setBoneColor(UIColor(color))
+        }
         .onReceive(debugModel.hands.$latestFrame.compactMap { $0 }) { frame in
             debugHandsEntity.update(with: frame)
         }
     }
 }
+
 
 
 
