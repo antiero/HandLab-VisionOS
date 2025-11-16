@@ -19,7 +19,7 @@ struct ImmersiveView: View {
 
     var body: some View {
         RealityView { content in
-            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.05))
+            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.001))
             sphere.position = [0, 1.0, -0.5]
             content.add(sphere)
 
