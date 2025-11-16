@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 @main
 struct HandLabApp: App {
     @StateObject private var debugModel = HandDebugModel()

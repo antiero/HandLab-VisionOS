@@ -27,15 +27,6 @@ struct ImmersiveView: View {
             debugHandsEntity.position = SIMD3<Float>(0, 1.0, -0.5)
             content.add(debugHandsEntity)
 
-        } update: { _ in
-            // no-op; driven by Combine
-        }
-        .task {
-            do {
-                try await debugModel.hands.run()
-            } catch {
-                print("Hand tracking failed: \(error)")
-            }
         }
         .onReceive(debugModel.$followTranslation) { follow in
             debugHandsEntity.mode = follow ? .follow : .anchored
@@ -63,9 +54,6 @@ struct ImmersiveView: View {
         }
     }
 }
-
-
-
 
 #Preview(immersionStyle: .mixed) {
     ImmersiveView()
