@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		EDE27E4F2EC87ABB00BADE3B /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = EDE27E4E2EC87ABB00BADE3B /* RealityKitContent */; };
 		EDE27E652EC87AE000BADE3B /* VisionHandKit in Frameworks */ = {isa = PBXBuildFile; productRef = EDE27E642EC87AE000BADE3B /* VisionHandKit */; };
+		EDE27E722EC9F64D00BADE3B /* VisionHandKit in Frameworks */ = {isa = PBXBuildFile; productRef = EDE27E712EC9F64D00BADE3B /* VisionHandKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			files = (
 				EDE27E652EC87AE000BADE3B /* VisionHandKit in Frameworks */,
 				EDE27E4F2EC87ABB00BADE3B /* RealityKitContent in Frameworks */,
+				EDE27E722EC9F64D00BADE3B /* VisionHandKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,6 +99,7 @@
 			packageProductDependencies = (
 				EDE27E4E2EC87ABB00BADE3B /* RealityKitContent */,
 				EDE27E642EC87AE000BADE3B /* VisionHandKit */,
+				EDE27E712EC9F64D00BADE3B /* VisionHandKit */,
 			);
 			productName = HandLab;
 			productReference = EDE27E492EC87ABB00BADE3B /* HandLab.app */;
@@ -127,7 +130,7 @@
 			mainGroup = EDE27E402EC87ABB00BADE3B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EDE27E632EC87AE000BADE3B /* XCLocalSwiftPackageReference "../../../Downloads/VisionHandKit" */,
+				EDE27E732EC9F89C00BADE3B /* XCLocalSwiftPackageReference "Packages/VisionHandKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EDE27E4A2EC87ABB00BADE3B /* Products */;
@@ -367,9 +370,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		EDE27E632EC87AE000BADE3B /* XCLocalSwiftPackageReference "../../../Downloads/VisionHandKit" */ = {
+		EDE27E732EC9F89C00BADE3B /* XCLocalSwiftPackageReference "Packages/VisionHandKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../Downloads/VisionHandKit;
+			relativePath = Packages/VisionHandKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -379,6 +382,10 @@
 			productName = RealityKitContent;
 		};
 		EDE27E642EC87AE000BADE3B /* VisionHandKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VisionHandKit;
+		};
+		EDE27E712EC9F64D00BADE3B /* VisionHandKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VisionHandKit;
 		};

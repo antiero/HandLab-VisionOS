@@ -14,10 +14,25 @@ import VisionHandKit
 /// Root entity that holds visualizers for left + right hands, side by side.
 final class DebugHandsEntity: Entity {
 
+    enum Mode {
+        case anchored     // hands stay centred in the panel
+        case follow       // hands move around in the panel volume
+    }
+
+    var mode: Mode = .anchored {
+        didSet {
+            if mode == .anchored {
+                followOrigin = nil
+            }
+        }
+    }
+
     private let leftDebugHand = DebugHandEntity(label: "L")
     private let rightDebugHand = DebugHandEntity(label: "R")
 
-    // Entity’s designated init is `required`, so we must also mark this required.
+    /// World-space origin used in follow mode.
+    private var followOrigin: SIMD3<Float>?
+
     required init() {
         super.init()
 
@@ -31,16 +46,31 @@ final class DebugHandsEntity: Entity {
 
     /// Update the debug visual from the latest frame.
     func update(with frame: HandFrame) {
+        // In follow mode, lazily pick a world-space origin once.
+        if mode == .follow && followOrigin == nil {
+            if let l = frame.leftHand?.wristPosition {
+                followOrigin = l
+            } else if let r = frame.rightHand?.wristPosition {
+                followOrigin = r
+            }
+        }
+
+        let originForThisFrame = followOrigin
+
         if let left = frame.leftHand {
             leftDebugHand.isEnabled = true
-            leftDebugHand.update(with: left)
+            leftDebugHand.update(with: left,
+                                 mode: mode,
+                                 followOrigin: originForThisFrame)
         } else {
             leftDebugHand.isEnabled = false
         }
 
         if let right = frame.rightHand {
             rightDebugHand.isEnabled = true
-            rightDebugHand.update(with: right)
+            rightDebugHand.update(with: right,
+                                  mode: mode,
+                                  followOrigin: originForThisFrame)
         } else {
             rightDebugHand.isEnabled = false
         }
@@ -144,7 +174,6 @@ final class DebugHandEntity: Entity {
         setupGeometry()
     }
 
-    /// Required by `Entity` when subclassing.
     required init() {
         self.label = ""
         super.init()
@@ -154,17 +183,16 @@ final class DebugHandEntity: Entity {
     /// Pre-create all joints and bones so we just move them every frame.
     private func setupGeometry() {
         let jointMesh = MeshResource.generateSphere(radius: jointRadius)
-        let jointMaterial = SimpleMaterial() // default material (no UIKit / Color fuss)
+        let jointMaterial = SimpleMaterial()
 
         for name in jointNames {
             let sphere = ModelEntity(mesh: jointMesh, materials: [jointMaterial])
-            sphere.name = "Joint_\(name)" // use description, not rawValue
+            sphere.name = "Joint_\(name)"
             sphere.position = .zero
             jointSpheres[name] = sphere
             addChild(sphere)
         }
 
-        // Note: height comes before radius in this overload.
         let boneMesh = MeshResource.generateCylinder(height: 1.0, radius: boneRadius)
         let boneMaterial = SimpleMaterial()
 
@@ -172,34 +200,48 @@ final class DebugHandEntity: Entity {
             let key = boneKey(from: from, to: to)
             let bone = ModelEntity(mesh: boneMesh, materials: [boneMaterial])
             bone.name = "Bone_\(from)_\(to)"
-            bone.transform = Transform() // identity transform
+            bone.transform = Transform()
             boneEntities[key] = bone
             addChild(bone)
         }
     }
 
     /// Update this debug hand with new tracking data.
-    func update(with hand: TrackedHand) {
-        // Use wrist as the origin for the miniature model.
+    func update(with hand: TrackedHand,
+                mode: DebugHandsEntity.Mode,
+                followOrigin: SIMD3<Float>?) {
+
         guard let wristWorld = hand.wristPosition else {
             for sphere in jointSpheres.values { sphere.isEnabled = false }
             for bone in boneEntities.values { bone.isEnabled = false }
             return
         }
 
-        // Cache joint positions relative to wrist (then scaled).
+        // Cache joint positions relative to some base world position,
+        // which depends on the mode.
         var localJointPositions: [HandSkeleton.JointName: SIMD3<Float>] = [:]
 
         for (name, sphere) in jointSpheres {
-            if let worldPos = hand.jointPosition(name) {
-                var local = worldPos - wristWorld
-                local *= debugScale
-                sphere.position = local
-                sphere.isEnabled = true
-                localJointPositions[name] = local
-            } else {
+            guard let worldPos = hand.jointPosition(name) else {
                 sphere.isEnabled = false
+                continue
             }
+
+            let baseWorld: SIMD3<Float>
+            switch mode {
+            case .anchored:
+                // Current behaviour: mini-hand centred on its own wrist.
+                baseWorld = wristWorld
+            case .follow:
+                // Use a shared origin for both hands, so they translate.
+                baseWorld = followOrigin ?? wristWorld
+            }
+
+            var local = worldPos - baseWorld
+            local *= debugScale
+            sphere.position = local
+            sphere.isEnabled = true
+            localJointPositions[name] = local
         }
 
         // Update bones using the local joint positions.

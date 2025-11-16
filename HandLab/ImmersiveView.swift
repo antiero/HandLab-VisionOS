@@ -11,54 +11,47 @@ import ARKit
 import Combine
 import VisionHandKit
 
-import SwiftUI
-import RealityKit
-import ARKit
-import Combine
-import VisionHandKit
-
 struct ImmersiveView: View {
-    @StateObject private var hands = VisionHandClient()
+    @EnvironmentObject var debugModel: HandDebugModel
+
+    // We own a single debug entity instance and add it to the scene once.
+    @State private var debugHandsEntity = DebugHandsEntity()
 
     var body: some View {
         RealityView { content in
-            // Main scene content (if you want other entities)
-            // e.g. a test sphere you can poke:
-//            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.05))
-//            sphere.position = [0, 1.3, -0.5]
-//            content.add(sphere)
+            // Main test entity (optional)
+            let sphere = ModelEntity(mesh: .generateSphere(radius: 0.01))
+            sphere.position = [0, 1, -0.5]
+            content.add(sphere)
 
-            // Hand debug panel
-            let debug = DebugHandsEntity()
-            debug.name = "HandDebugPanel"
-            debug.position = SIMD3<Float>(0, 1.2, -0.8)  // In front of the user
-            content.add(debug)
+            // Add our persistent debug entity
+            debugHandsEntity.name = "HandDebugPanel"
+            debugHandsEntity.position = SIMD3<Float>(0, 0.8, -0.8) // in front of user
+            content.add(debugHandsEntity)
 
-        } update: { content in
-            // Drive the debug panel from the latest VisionHandKit frame.
-            guard
-                let debug = content.entities.first(where: { $0.name == "HandDebugPanel" }) as? DebugHandsEntity,
-                let frame = hands.latestFrame
-            else { return }
-
-            debug.update(with: frame)
+        } update: { _ in
+            // We no longer rely on this for frame updates.
+            // RealityKit will still tick physics/rendering as needed.
         }
         .task {
+            // Start hand tracking whenever the immersive space is active.
             do {
-                try await hands.run()
+                try await debugModel.hands.run()
             } catch {
                 print("Hand tracking failed: \(error)")
             }
         }
-        .onReceive(hands.$latestFrame.compactMap { $0 }) { frame in
-            // Optional: keep your pinch logging (or other analytics) here.
-//            if let right = frame.rightHand,
-//               let pinch = right.pinchStrength() {
-//                print("Right pinch:", pinch)
-//            }
+        // React to followTranslation changes from the window control panel.
+        .onReceive(debugModel.$followTranslation) { follow in
+            debugHandsEntity.mode = follow ? .follow : .anchored
+        }
+        // Drive the tiny hand rig directly from the incoming frames.
+        .onReceive(debugModel.hands.$latestFrame.compactMap { $0 }) { frame in
+            debugHandsEntity.update(with: frame)
         }
     }
 }
+
 
 #Preview(immersionStyle: .mixed) {
     ImmersiveView()

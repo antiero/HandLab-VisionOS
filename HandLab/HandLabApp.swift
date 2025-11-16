@@ -7,27 +7,23 @@
 
 import SwiftUI
 
+import SwiftUI
+
 @main
 struct HandLabApp: App {
-
-    @State private var appModel = AppModel()
+    @StateObject private var debugModel = HandDebugModel()
 
     var body: some Scene {
+        // Normal window with controls
         WindowGroup {
-            ContentView()
-                .environment(appModel)
+            ControlPanelView()
+                .environmentObject(debugModel)
         }
 
-        ImmersiveSpace(id: appModel.immersiveSpaceID) {
+        // Immersive space with the 3D debug hands
+        ImmersiveSpace(id: "HandLabSpace") {
             ImmersiveView()
-                .environment(appModel)
-                .onAppear {
-                    appModel.immersiveSpaceState = .open
-                }
-                .onDisappear {
-                    appModel.immersiveSpaceState = .closed
-                }
+                .environmentObject(debugModel)
         }
-        .immersionStyle(selection: .constant(.mixed), in: .mixed)
-     }
+    }
 }
