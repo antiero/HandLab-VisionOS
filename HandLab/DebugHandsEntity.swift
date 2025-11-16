@@ -73,6 +73,18 @@ final class DebugHandsEntity: Entity {
             rightDebugHand.position = SIMD3<Float>(handSpacing, 0, 0)
         }
     }
+    
+    /// Set joint radius (applies to both hands).
+    func setJointRadius(_ radius: Float) {
+        leftDebugHand.updateJointRadius(radius)
+        rightDebugHand.updateJointRadius(radius)
+    }
+
+        /// Set bone radius (applies to both hands).
+    func setBoneRadius(_ radius: Float) {
+        leftDebugHand.updateBoneRadius(radius)
+        rightDebugHand.updateBoneRadius(radius)
+    }
 
     /// Set left-hand joint color.
     func setLeftHandColor(_ color: UIColor) {
@@ -134,9 +146,13 @@ final class DebugHandEntity: Entity {
     /// Global scale for the miniature hand.
     private let debugScale: Float = 0.2
 
-    /// Radii for joints and bones.
-    private let jointRadius: Float = 0.004
-    private let boneRadius: Float = 0.002
+    /// Base radii for joints and bones (used for mesh generation).
+    private let baseJointRadius: Float = 0.004
+    private let baseBoneRadius: Float = 0.002
+
+    /// Current scale factors relative to base radii.
+    private var jointRadiusScale: Float = 1.0
+    private var boneRadiusScale: Float = 1.0
 
     /// Current colors.
     private var jointColor: UIColor
@@ -233,7 +249,7 @@ final class DebugHandEntity: Entity {
         let jointMaterial = SimpleMaterial(color: jointColor,
                                            roughness: 0.3,
                                            isMetallic: false)
-        let jointMesh = MeshResource.generateSphere(radius: jointRadius)
+        let jointMesh = MeshResource.generateSphere(radius: baseJointRadius)
 
         for name in jointNames {
             let sphere = ModelEntity(mesh: jointMesh, materials: [jointMaterial])
@@ -244,9 +260,9 @@ final class DebugHandEntity: Entity {
         }
 
         let boneMaterial = SimpleMaterial(color: boneColor,
-                                          roughness: 0.5,
-                                          isMetallic: false)
-        let boneMesh = MeshResource.generateCylinder(height: 1.0, radius: boneRadius)
+                                                  roughness: 0.5,
+                                                  isMetallic: false)
+        let boneMesh = MeshResource.generateCylinder(height: 1.0, radius: baseBoneRadius)
 
         for (from, to) in bonePairs {
             let key = boneKey(from: from, to: to)
@@ -256,6 +272,22 @@ final class DebugHandEntity: Entity {
             boneEntities[key] = bone
             addChild(bone)
         }
+    }
+    
+    /// Change joint radius at runtime (applies scale relative to base).
+    func updateJointRadius(_ radius: Float) {
+        let scale = max(radius / baseJointRadius, 0.01) // avoid zero / tiny
+        jointRadiusScale = scale
+        for sphere in jointSpheres.values {
+            sphere.scale = SIMD3<Float>(repeating: scale)
+        }
+    }
+
+    /// Change bone radius at runtime (applies scale relative to base).
+    func updateBoneRadius(_ radius: Float) {
+        let scale = max(radius / baseBoneRadius, 0.01)
+        boneRadiusScale = scale
+        // actual scale is applied in updateBoneEntity via boneRadiusScale
     }
 
     /// Change joint color at runtime.
@@ -361,7 +393,7 @@ final class DebugHandEntity: Entity {
         }
 
         bone.transform = Transform(
-            scale: SIMD3<Float>(1, length, 1),
+            scale: SIMD3<Float>(boneRadiusScale, length, boneRadiusScale),
             rotation: rotation,
             translation: mid
         )

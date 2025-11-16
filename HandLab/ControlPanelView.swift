@@ -33,6 +33,7 @@ struct ControlPanelView: View {
                 .disabled(!debugModel.followTranslation)
                 .opacity(debugModel.followTranslation ? 1.0 : 0.4)
 
+            // Colors
             VStack(alignment: .leading, spacing: 8) {
                 Text("Hand Colors")
                     .font(.headline)
@@ -48,6 +49,32 @@ struct ControlPanelView: View {
                 ColorPicker("Bone cylinders",
                             selection: $debugModel.boneColor,
                             supportsOpacity: false)
+            }
+
+            // Radii
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Geometry")
+                    .font(.headline)
+
+                VStack(alignment: .leading) {
+                    Text("Joint radius: \(debugModel.jointRadius, specifier: "%.4f") m")
+                        .font(.caption)
+                    Slider(
+                        value: $debugModel.jointRadius,
+                        in: 0.001...0.005,
+                        step: 0.0005
+                    )
+                }
+
+                VStack(alignment: .leading) {
+                    Text("Bone radius: \(debugModel.boneRadius, specifier: "%.4f") m")
+                        .font(.caption)
+                    Slider(
+                        value: $debugModel.boneRadius,
+                        in: 0.0005...0.005,
+                        step: 0.0005
+                    )
+                }
             }
 
             Divider()
@@ -77,9 +104,10 @@ struct ControlPanelView: View {
             Spacer()
         }
         .padding(24)
-        .frame(idealWidth: 420, idealHeight: 460)
+        .frame(idealWidth: 440, idealHeight: 520)
     }
 }
+
 
 
 #Preview {

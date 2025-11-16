@@ -28,7 +28,7 @@ struct ImmersiveView: View {
             content.add(debugHandsEntity)
 
         } update: { _ in
-            // no-op; we drive updates via Combine
+            // no-op; driven by Combine
         }
         .task {
             do {
@@ -51,6 +51,12 @@ struct ImmersiveView: View {
         }
         .onReceive(debugModel.$boneColor) { color in
             debugHandsEntity.setBoneColor(UIColor(color))
+        }
+        .onReceive(debugModel.$jointRadius) { radius in
+            debugHandsEntity.setJointRadius(Float(radius))
+        }
+        .onReceive(debugModel.$boneRadius) { radius in
+            debugHandsEntity.setBoneRadius(Float(radius))
         }
         .onReceive(debugModel.hands.$latestFrame.compactMap { $0 }) { frame in
             debugHandsEntity.update(with: frame)
