@@ -1,6 +1,6 @@
 import Foundation
 import ARKit
-import Combine
+import Observation
 
 /// Owns an ARKitSession + HandTrackingProvider lifecycle and exposes
 /// a cached "latest frame" plus a callback.
@@ -9,16 +9,15 @@ import Combine
 /// HandTrackingProvider every time `run()` is called, so you can
 /// safely open/close immersive spaces without hitting the
 /// "re-run a stopped data provider" exception.
+
 @MainActor
-public final class VisionHandClient: ObservableObject {
+@Observable
+public final class VisionHandClient {
 
-    /// Latest combined frame.
-    @Published public private(set) var latestFrame: HandFrame?
-
-    /// Optional callback fired whenever a new frame is produced.
+    public private(set) var latestFrame: HandFrame?
+    public private(set) var latestFrameID: Int = 0   // for SwiftUI onChange
     public var onFrame: ((HandFrame) -> Void)?
 
-    private var frameCounter: Int64 = 0
     private var isRunning = false
 
     public enum HandTrackingError: Error {
@@ -72,12 +71,12 @@ public final class VisionHandClient: ObservableObject {
 
     private func processAnchors(from provider: HandTrackingProvider) {
         let anchors = provider.latestAnchors
-        frameCounter &+= 1
-
         let timestamp = Date().timeIntervalSince1970
 
+        latestFrameID &+= 1
+
         let frame = HandFrame(
-            id: frameCounter,
+            id: latestFrameID,
             timestamp: timestamp,
             leftHand: anchors.leftHand.map { TrackedHand(anchor: $0) },
             rightHand: anchors.rightHand.map { TrackedHand(anchor: $0) }

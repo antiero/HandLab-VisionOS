@@ -5,7 +5,7 @@ import ARKit
 /// A snapshot of both hands at a given moment.
 public struct HandFrame: Sendable {
     /// Monotonically increasing ID (local to this process).
-    public let id: Int64
+    public let id: Int
 
     /// Timestamp in seconds since 1970.
     public let timestamp: TimeInterval
@@ -22,7 +22,7 @@ public struct HandFrame: Sendable {
     }
 
     public init(
-        id: Int64,
+        id: Int,
         timestamp: TimeInterval,
         leftHand: TrackedHand?,
         rightHand: TrackedHand?

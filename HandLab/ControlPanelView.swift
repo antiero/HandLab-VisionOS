@@ -9,13 +9,15 @@ import SwiftUI
 import VisionHandKit
 
 struct ControlPanelView: View {
-    @EnvironmentObject var debugModel: HandDebugModel
+    @Environment(HandDebugModel.self) private var debugModel
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
 
     @State private var immersiveIsOpen = false
 
     var body: some View {
+        @Bindable var debugModel = debugModel   // local bindable handle
+
         VStack(alignment: .leading, spacing: 16) {
             Text("HandLab Control Panel")
                 .font(.title)
@@ -109,19 +111,15 @@ struct ControlPanelView: View {
 
         // 1) Start hand tracking as soon as the control panel appears
         .task {
-            do {
-                try await debugModel.hands.run()
-            } catch {
-                print("Hand tracking failed: \(error)")
-            }
+            do { try await debugModel.hands.run() }
+            catch { print("Hand tracking failed: \(error)") }
         }
 
         // 2) Auto-open the immersive space on first launch
         .task {
-            if !immersiveIsOpen {
-                _ = await openImmersiveSpace(id: "HandLabSpace")
-                immersiveIsOpen = true
-            }
+            guard !immersiveIsOpen else { return }
+            _ = await openImmersiveSpace(id: "HandLabSpace")
+            immersiveIsOpen = true
         }
     }
 }
@@ -130,5 +128,5 @@ struct ControlPanelView: View {
 
 #Preview {
     ControlPanelView()
-        .environmentObject(HandDebugModel())
+        .environment(HandDebugModel())
 }

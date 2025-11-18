@@ -8,12 +8,11 @@
 import SwiftUI
 import RealityKit
 import ARKit
-import Combine
 import VisionHandKit
 import UIKit
 
 struct ImmersiveView: View {
-    @EnvironmentObject var debugModel: HandDebugModel
+    @Environment(HandDebugModel.self) private var debugModel
 
     @State private var debugHandsEntity = DebugHandsEntity()
 
@@ -26,36 +25,39 @@ struct ImmersiveView: View {
             debugHandsEntity.name = "HandDebugPanel"
             debugHandsEntity.position = SIMD3<Float>(0, 1.0, -0.5)
             content.add(debugHandsEntity)
-
         }
-        .onReceive(debugModel.$followTranslation) { follow in
+        // Observation-powered reactions
+        .onChange(of: debugModel.followTranslation) { _, follow in
             debugHandsEntity.mode = follow ? .follow : .anchored
         }
-        .onReceive(debugModel.$absolutePositions) { absolute in
+        .onChange(of: debugModel.absolutePositions) { _, absolute in
             debugHandsEntity.absolutePositions = absolute
         }
-        .onReceive(debugModel.$leftHandColor) { color in
+        .onChange(of: debugModel.leftHandColor) { _, color in
             debugHandsEntity.setLeftHandColor(UIColor(color))
         }
-        .onReceive(debugModel.$rightHandColor) { color in
+        .onChange(of: debugModel.rightHandColor) { _, color in
             debugHandsEntity.setRightHandColor(UIColor(color))
         }
-        .onReceive(debugModel.$boneColor) { color in
+        .onChange(of: debugModel.boneColor) { _, color in
             debugHandsEntity.setBoneColor(UIColor(color))
         }
-        .onReceive(debugModel.$jointRadius) { radius in
+        .onChange(of: debugModel.jointRadius) { _, radius in
             debugHandsEntity.setJointRadius(Float(radius))
         }
-        .onReceive(debugModel.$boneRadius) { radius in
+        .onChange(of: debugModel.boneRadius) { _, radius in
             debugHandsEntity.setBoneRadius(Float(radius))
         }
-        .onReceive(debugModel.hands.$latestFrame.compactMap { $0 }) { frame in
-            debugHandsEntity.update(with: frame)
+        // Drive the skeleton from latestFrameID
+        .onChange(of: debugModel.hands.latestFrameID) { _, _ in
+            if let frame = debugModel.hands.latestFrame {
+                debugHandsEntity.update(with: frame)
+            }
         }
     }
 }
 
 #Preview(immersionStyle: .mixed) {
     ImmersiveView()
-        .environmentObject(HandDebugModel())
+        .environment(HandDebugModel())
 }

@@ -6,22 +6,21 @@
 //
 
 import SwiftUI
+import Observation
 
 @main
 struct HandLabApp: App {
-    @StateObject private var debugModel = HandDebugModel()
+    @State private var debugModel = HandDebugModel()
 
     var body: some Scene {
-        // Normal window with controls
         WindowGroup {
             ControlPanelView()
-                .environmentObject(debugModel)
+                .environment(debugModel)   // inject Observable model
         }
 
-        // Immersive space with the 3D debug hands
         ImmersiveSpace(id: "HandLabSpace") {
             ImmersiveView()
-                .environmentObject(debugModel)
+                .environment(debugModel)
         }
     }
 }
