@@ -13,10 +13,14 @@ struct ControlPanelView: View {
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
 
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
+
     @State private var immersiveIsOpen = false
+    @State private var dioramaIsOpen = false
 
     var body: some View {
-        @Bindable var debugModel = debugModel   // local bindable handle
+        @Bindable var debugModel = debugModel
 
         VStack(alignment: .leading, spacing: 16) {
             Text("HandLab Control Panel")
@@ -36,7 +40,6 @@ struct ControlPanelView: View {
                 .disabled(!debugModel.followTranslation)
                 .opacity(debugModel.followTranslation ? 1.0 : 0.4)
 
-            // Colors
             VStack(alignment: .leading, spacing: 8) {
                 Text("Hand Colors")
                     .font(.headline)
@@ -54,7 +57,6 @@ struct ControlPanelView: View {
                             supportsOpacity: false)
             }
 
-            // Radii
             VStack(alignment: .leading, spacing: 8) {
                 Text("Geometry")
                     .font(.headline)
@@ -83,23 +85,17 @@ struct ControlPanelView: View {
             Divider()
                 .padding(.vertical, 8)
 
-            Text("Immersive Space")
+            Text("Tiny Hands Diorama")
                 .font(.headline)
 
             HStack {
-                if immersiveIsOpen {
-                    Button("Close Immersive View") {
-                        Task {
-                            await dismissImmersiveSpace()
-                            immersiveIsOpen = false
-                        }
-                    }
-                } else {
-                    Button("Open Immersive View") {
-                        Task {
-                            _ = await openImmersiveSpace(id: "HandLabSpace")
-                            immersiveIsOpen = true
-                        }
+                Button(dioramaIsOpen ? "Close Diorama" : "Open Diorama") {
+                    if dioramaIsOpen {
+                        dismissWindow(id: "TinyHandsDiorama")
+                        dioramaIsOpen = false
+                    } else {
+                        openWindow(id: "TinyHandsDiorama")
+                        dioramaIsOpen = true
                     }
                 }
             }
@@ -109,22 +105,31 @@ struct ControlPanelView: View {
         .padding(24)
         .frame(maxWidth: 380)
 
-        // 1) Start hand tracking as soon as the control panel appears
-        .task {
-            do { try await debugModel.hands.run() }
-            catch { print("Hand tracking failed: \(error)") }
-        }
-
-        // 2) Auto-open the immersive space on first launch
+        // 1) Ensure we’re in a Full Space so ARKit can stream hands.
         .task {
             guard !immersiveIsOpen else { return }
-            _ = await openImmersiveSpace(id: "HandLabSpace")
-            immersiveIsOpen = true
+
+            let result = await openImmersiveSpace(id: "HandLabSpace")
+            if case .opened = result {
+                immersiveIsOpen = true
+                print("[ControlPanel] Immersive space opened")
+            } else {
+                print("[ControlPanel] Failed to open immersive space: \(String(describing: result))")
+            }
+        }
+
+        // 2) Start VisionHandClient.run() once we’re up.
+        .task {
+            do {
+                print("[ControlPanel] Starting VisionHandClient.run()")
+                try await debugModel.hands.run()
+                print("[ControlPanel] VisionHandClient.run() returned (session ended)")
+            } catch {
+                print("[ControlPanel] VisionHandClient.run() error: \(error)")
+            }
         }
     }
 }
-
-
 
 #Preview {
     ControlPanelView()

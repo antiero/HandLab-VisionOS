@@ -23,4 +23,28 @@ final class HandDebugModel {
     var boneRadius: Double = 0.002
 
     let hands = VisionHandClient()
+
+    private var hasStarted = false
+
+    func startHandTracking() {
+        guard !hasStarted else { return }
+        hasStarted = true
+
+        Task {
+            // This *will* print as soon as the Task starts
+            print("[HandDebugModel] calling VisionHandClient.run()")
+
+            do {
+                // Long-running; expect this to suspend for the lifetime of the app
+                try await hands.run()
+
+                // You usually WON'T see this unless the session ends
+                print("[HandDebugModel] VisionHandClient.run() returned (session ended)")
+            } catch {
+                print("[HandDebugModel] VisionHandClient.run() error: \(error)")
+            }
+        }
+    }
 }
+
+
