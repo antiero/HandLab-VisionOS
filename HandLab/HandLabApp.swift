@@ -32,6 +32,10 @@ struct HandLabApp: App {
                 .environment(debugModel)
         }
         .windowStyle(.volumetric)
+        .defaultSize(width: 0.3,
+                     height: 0.3,
+                     depth: 0.3,
+                     in: .meters)
         
         // Minimal ImmersiveSpace, just to unlock ARKit hand tracking
         ImmersiveSpace(id: "HandLabSpace") {
