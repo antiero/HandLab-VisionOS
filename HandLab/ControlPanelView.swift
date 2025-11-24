@@ -103,7 +103,10 @@ struct ControlPanelView: View {
             Spacer()
         }
         .padding(24)
-        .frame(maxWidth: 380)
+        .frame(
+            minWidth: 380, maxWidth: 420,
+            minHeight: 700, maxHeight: 720
+        )
 
         // 1) Ensure we’re in a Full Space so ARKit can stream hands.
         .task {
@@ -115,17 +118,6 @@ struct ControlPanelView: View {
                 print("[ControlPanel] Immersive space opened")
             } else {
                 print("[ControlPanel] Failed to open immersive space: \(String(describing: result))")
-            }
-        }
-
-        // 2) Start VisionHandClient.run() once we’re up.
-        .task {
-            do {
-                print("[ControlPanel] Starting VisionHandClient.run()")
-                try await debugModel.hands.run()
-                print("[ControlPanel] VisionHandClient.run() returned (session ended)")
-            } catch {
-                print("[ControlPanel] VisionHandClient.run() error: \(error)")
             }
         }
     }

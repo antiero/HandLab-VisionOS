@@ -25,6 +25,8 @@ struct HandLabApp: App {
             ControlPanelView()
                 .environment(debugModel)
         }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 400, height: 720)
 
         // Diorama volume hosting the tiny hands
         WindowGroup(id: "TinyHandsDiorama") {
