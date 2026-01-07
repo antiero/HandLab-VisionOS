@@ -24,6 +24,7 @@ final class HandDebugModel {
 
     var jointRadius: Double = 0.004
     var boneRadius: Double = 0.002
+    var overlayStripLift: Double = 0.012 // meters; positive moves overlays toward the viewer
 
     let hands = VisionHandClient()
 
@@ -45,6 +46,21 @@ final class HandDebugModel {
                 print("[HandDebugModel] VisionHandClient.run() returned (session ended)")
             } catch {
                 print("[HandDebugModel] VisionHandClient.run() error: \(error)")
+            }
+        }
+    }
+
+    func restartHandTrackingIfNeeded() {
+        // If the session has ended or app became active again, attempt to run once more.
+        Task { [weak self] in
+            guard let self else { return }
+            // If already running, VisionHandClient.run() should be long-lived; call again if it returned.
+            print("[HandDebugModel] restartHandTrackingIfNeeded() invoked")
+            do {
+                try await self.hands.run()
+                print("[HandDebugModel] VisionHandClient.run() returned (session ended)")
+            } catch {
+                print("[HandDebugModel] VisionHandClient.run() error on restart: \(error)")
             }
         }
     }

@@ -136,6 +136,14 @@ private struct TinyHandsBindingsModifier: ViewModifier {
                     debugHandsEntity.update(with: frame)
                 }
             }
+            .onChange(of: debugModel.showHandOverlays) { _, showing in
+                // When overlays are visible at the user's real hands, silence the diorama
+                // so musical visuals and audio only occur at the real hands.
+                debugHandsEntity.setAudioEnabled(!showing)
+                debugHandsEntity.setTapFeedbackEnabled(!showing)
+                // Always disable chord strips in the TinyHands diorama
+                debugHandsEntity.setChordStripsEnabled(false)
+            }
     }
 
     private func applyAllSettings() {
@@ -146,6 +154,13 @@ private struct TinyHandsBindingsModifier: ViewModifier {
         debugHandsEntity.setBoneColor(UIColor(debugModel.boneColor))
         debugHandsEntity.setJointRadius(Float(debugModel.jointRadius))
         debugHandsEntity.setBoneRadius(Float(debugModel.boneRadius))
+
+        // Initialize TinyHands audio/visual gates based on overlay visibility
+        let showingOverlays = debugModel.showHandOverlays
+        debugHandsEntity.setAudioEnabled(!showingOverlays)
+        debugHandsEntity.setTapFeedbackEnabled(!showingOverlays)
+        // Always disable chord strips in the TinyHands diorama
+        debugHandsEntity.setChordStripsEnabled(false)
     }
 }
 

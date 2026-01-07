@@ -12,6 +12,7 @@ struct ControlPanelView: View {
     @Environment(HandDebugModel.self) private var debugModel
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @Environment(\.scenePhase) private var scenePhase
 
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
@@ -80,6 +81,16 @@ struct ControlPanelView: View {
                         step: 0.0005
                     )
                 }
+                
+                VStack(alignment: .leading) {
+                    Text("Overlay strip lift: \(debugModel.overlayStripLift * 1000, specifier: "%.0f") mm")
+                        .font(.caption)
+                    Slider(
+                        value: $debugModel.overlayStripLift,
+                        in: -0.02...0.02,
+                        step: 0.001
+                    )
+                }
             }
 
             Divider()
@@ -128,6 +139,21 @@ struct ControlPanelView: View {
                 print("[ControlPanel] Immersive space opened")
             } else {
                 print("[ControlPanel] Failed to open immersive space: \(String(describing: result))")
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .active:
+                // Re-open immersive space if it was closed and restart hand tracking if needed
+                if !immersiveIsOpen {
+                    Task { @MainActor in
+                        let result = await openImmersiveSpace(id: "HandLabSpace")
+                        if case .opened = result { immersiveIsOpen = true }
+                    }
+                }
+                debugModel.restartHandTrackingIfNeeded()
+            default:
+                break
             }
         }
     }
