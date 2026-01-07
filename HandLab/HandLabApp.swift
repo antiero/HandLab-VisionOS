@@ -41,7 +41,11 @@ struct HandLabApp: App {
         
         // Minimal ImmersiveSpace, just to unlock ARKit hand tracking
         ImmersiveSpace(id: "HandLabSpace") {
-            Color.clear               // no visible immersive content needed
+            ZStack {
+                Color.clear
+                HandOverlayView()
+                    .environment(debugModel)
+            }
         }
     }
 }

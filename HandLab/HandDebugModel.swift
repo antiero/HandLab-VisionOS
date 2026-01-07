@@ -12,6 +12,9 @@ import VisionHandKit
 @MainActor
 @Observable
 final class HandDebugModel {
+    var showHandOverlays: Bool = false
+    var showOverlayBones: Bool = false
+
     var followTranslation: Bool = false
     var absolutePositions: Bool = false
 

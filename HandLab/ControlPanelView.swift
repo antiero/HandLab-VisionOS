@@ -100,6 +100,16 @@ struct ControlPanelView: View {
                 }
             }
 
+            // Overlay controls
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Show Hand Overlays", isOn: $debugModel.showHandOverlays)
+                    .toggleStyle(.switch)
+                Toggle("Show overlay bones", isOn: $debugModel.showOverlayBones)
+                    .toggleStyle(.switch)
+                    .disabled(!debugModel.showHandOverlays)
+                    .opacity(debugModel.showHandOverlays ? 1.0 : 0.4)
+            }
+
             Spacer()
         }
         .padding(24)
