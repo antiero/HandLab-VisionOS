@@ -27,22 +27,27 @@ final class HandDebugModel {
     var overlayStripLift: Double = 0.012 // meters; positive moves overlays toward the viewer
 
     let hands = VisionHandClient()
+    private var runTask: Task<Void, Never>? = nil
 
     private var hasStarted = false
 
     func startHandTracking() {
-        guard !hasStarted else { return }
+        // Avoid spawning multiple run loops
+        guard runTask == nil else { return }
         hasStarted = true
 
-        Task {
-            // This *will* print as soon as the Task starts
+        runTask = Task { [weak self] in
+            guard let self else { return }
             print("[HandDebugModel] calling VisionHandClient.run()")
-
+            defer {
+                // Mark not started so we can start again later
+                Task { @MainActor in
+                    self.hasStarted = false
+                    self.runTask = nil
+                }
+            }
             do {
-                // Long-running; expect this to suspend for the lifetime of the app
-                try await hands.run()
-
-                // You usually WON'T see this unless the session ends
+                try await self.hands.run()
                 print("[HandDebugModel] VisionHandClient.run() returned (session ended)")
             } catch {
                 print("[HandDebugModel] VisionHandClient.run() error: \(error)")
@@ -51,19 +56,22 @@ final class HandDebugModel {
     }
 
     func restartHandTrackingIfNeeded() {
-        // If the session has ended or app became active again, attempt to run once more.
-        Task { [weak self] in
-            guard let self else { return }
-            // If already running, VisionHandClient.run() should be long-lived; call again if it returned.
-            print("[HandDebugModel] restartHandTrackingIfNeeded() invoked")
-            do {
-                try await self.hands.run()
-                print("[HandDebugModel] VisionHandClient.run() returned (session ended)")
-            } catch {
-                print("[HandDebugModel] VisionHandClient.run() error on restart: \(error)")
-            }
+        // If not currently running, start again. Safe to call multiple times.
+        if runTask == nil {
+            startHandTracking()
+        } else {
+            print("[HandDebugModel] restartHandTrackingIfNeeded(): runTask already active")
         }
     }
-}
 
+    func stopHandTracking() {
+        // Cancel the running task, if any, so ARKit session/providers stop cleanly
+        if let task = runTask {
+            print("[HandDebugModel] Cancelling hand tracking task")
+            task.cancel()
+            runTask = nil
+        }
+        hasStarted = false
+    }
+}
 

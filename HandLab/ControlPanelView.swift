@@ -144,14 +144,27 @@ struct ControlPanelView: View {
         .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
             case .active:
-                // Re-open immersive space if it was closed and restart hand tracking if needed
-                if !immersiveIsOpen {
-                    Task { @MainActor in
-                        let result = await openImmersiveSpace(id: "HandLabSpace")
-                        if case .opened = result { immersiveIsOpen = true }
+                // Always attempt to (re)open immersive space when becoming active; the system may have closed it.
+                Task { @MainActor in
+                    let result = await openImmersiveSpace(id: "HandLabSpace")
+                    if case .opened = result {
+                        immersiveIsOpen = true
+                        print("[ControlPanel] Immersive space opened on .active")
+                        // Now that the immersive space is open, (re)start hand tracking
+                        debugModel.restartHandTrackingIfNeeded()
+                    } else {
+                        // If it didn't open, mark as closed and still attempt to start tracking (may no-op if unsupported)
+                        immersiveIsOpen = false
+                        print("[ControlPanel] Failed to open immersive space on .active: \(String(describing: result))")
+                        debugModel.restartHandTrackingIfNeeded()
                     }
                 }
-                debugModel.restartHandTrackingIfNeeded()
+            case .inactive, .background:
+                // When the app loses focus, the immersive space may be closed by the system.
+                // Reset the flag and stop the current hand tracking task so we can cleanly restart later.
+                immersiveIsOpen = false
+                print("[ControlPanel] Scene became \(newPhase); marking immersiveIsOpen = false and stopping hand tracking")
+                debugModel.stopHandTracking()
             default:
                 break
             }

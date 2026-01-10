@@ -19,6 +19,7 @@ public final class VisionHandClient {
     public var onFrame: ((HandFrame) -> Void)?
 
     private var isRunning = false
+    private var publishScheduled = false
 
     public enum HandTrackingError: Error {
         case notSupported
@@ -73,16 +74,28 @@ public final class VisionHandClient {
         let anchors = provider.latestAnchors
         let timestamp = Date().timeIntervalSince1970
 
-        latestFrameID &+= 1
-
+        // Build the new frame and cache it synchronously
         let frame = HandFrame(
-            id: latestFrameID,
+            id: latestFrameID, // id will be incremented at publish time
             timestamp: timestamp,
             leftHand: anchors.leftHand.map { TrackedHand(anchor: $0) },
             rightHand: anchors.rightHand.map { TrackedHand(anchor: $0) }
         )
-
         latestFrame = frame
-        onFrame?(frame)
+
+        // Coalesce multiple provider updates within the same run loop to a single SwiftUI change
+        if !publishScheduled {
+            publishScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                // Increment ID once per coalesced publish
+                self.latestFrameID &+= 1
+                // Invoke callback with the most recent frame
+                if let latest = self.latestFrame {
+                    self.onFrame?(latest)
+                }
+                self.publishScheduled = false
+            }
+        }
     }
 }

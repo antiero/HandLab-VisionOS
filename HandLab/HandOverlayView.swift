@@ -75,6 +75,10 @@ struct HandOverlayView: View {
                         rightEntity.isEnabled = false
                     }
                 }
+                .onAppear {
+                    // Ensure hand tracking is running when the immersive overlay appears
+                    debugModel.restartHandTrackingIfNeeded()
+                }
                 .onChange(of: debugModel.leftHandColor) { _, newColor in
                     leftEntity.updateJointColor(UIColor(newColor))
                 }
@@ -165,66 +169,8 @@ private final class OverlayHandEntity: Entity {
 
     private var jointColor: UIColor
 
-    private let jointNames: [HandSkeleton.JointName] = [
-        .wrist,
-        .forearmWrist,
-        .forearmArm,
-        .thumbKnuckle,
-        .thumbIntermediateBase,
-        .thumbIntermediateTip,
-        .thumbTip,
-        .indexFingerMetacarpal,
-        .indexFingerKnuckle,
-        .indexFingerIntermediateBase,
-        .indexFingerIntermediateTip,
-        .indexFingerTip,
-        .middleFingerMetacarpal,
-        .middleFingerKnuckle,
-        .middleFingerIntermediateBase,
-        .middleFingerIntermediateTip,
-        .middleFingerTip,
-        .ringFingerMetacarpal,
-        .ringFingerKnuckle,
-        .ringFingerIntermediateBase,
-        .ringFingerIntermediateTip,
-        .ringFingerTip,
-        .littleFingerMetacarpal,
-        .littleFingerKnuckle,
-        .littleFingerIntermediateBase,
-        .littleFingerIntermediateTip,
-        .littleFingerTip
-    ]
-    
-    private lazy var bonePairs: [(HandSkeleton.JointName, HandSkeleton.JointName)] = [
-        (.wrist, .thumbKnuckle),
-        (.thumbKnuckle, .thumbIntermediateBase),
-        (.thumbIntermediateBase, .thumbIntermediateTip),
-        (.thumbIntermediateTip, .thumbTip),
-
-        (.wrist, .indexFingerMetacarpal),
-        (.indexFingerMetacarpal, .indexFingerKnuckle),
-        (.indexFingerKnuckle, .indexFingerIntermediateBase),
-        (.indexFingerIntermediateBase, .indexFingerIntermediateTip),
-        (.indexFingerIntermediateTip, .indexFingerTip),
-
-        (.wrist, .middleFingerMetacarpal),
-        (.middleFingerMetacarpal, .middleFingerKnuckle),
-        (.middleFingerKnuckle, .middleFingerIntermediateBase),
-        (.middleFingerIntermediateBase, .middleFingerIntermediateTip),
-        (.middleFingerIntermediateTip, .middleFingerTip),
-
-        (.wrist, .ringFingerMetacarpal),
-        (.ringFingerMetacarpal, .ringFingerKnuckle),
-        (.ringFingerKnuckle, .ringFingerIntermediateBase),
-        (.ringFingerIntermediateBase, .ringFingerIntermediateTip),
-        (.ringFingerIntermediateTip, .ringFingerTip),
-
-        (.wrist, .littleFingerMetacarpal),
-        (.littleFingerMetacarpal, .littleFingerKnuckle),
-        (.littleFingerKnuckle, .littleFingerIntermediateBase),
-        (.littleFingerIntermediateBase, .littleFingerIntermediateTip),
-        (.littleFingerIntermediateTip, .littleFingerTip)
-    ]
+    private let jointNames = HandTopology.allJoints
+    private let bonePairs = HandTopology.boneEdges
 
     init(color: UIColor) {
         self.jointColor = color
@@ -276,7 +222,6 @@ private final class OverlayHandEntity: Entity {
             let segments = 24
             let rx = width * 0.5
             let rz = height * 0.5
-            var prevPoint = SIMD3<Float>(rx, 0, 0)
             for i in 1...segments {
                 let a0 = Float(i - 1) / Float(segments) * 2 * .pi
                 let a1 = Float(i) / Float(segments) * 2 * .pi
@@ -305,7 +250,6 @@ private final class OverlayHandEntity: Entity {
                 }
                 e.transform = Transform(scale: .one, rotation: rot, translation: mid)
                 frame.addChild(e)
-                prevPoint = p1
             }
             frame.isEnabled = false
             return frame

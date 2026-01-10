@@ -200,73 +200,9 @@ final class DebugHandEntity: Entity {
     private var jointColor: UIColor
     private var boneColor: UIColor
 
-    /// All joints we care about.
-    private let jointNames: [HandSkeleton.JointName] = [
-        .wrist,
-        .forearmWrist,
-        .forearmArm,
-
-        .thumbKnuckle,
-        .thumbIntermediateBase,
-        .thumbIntermediateTip,
-        .thumbTip,
-
-        .indexFingerMetacarpal,
-        .indexFingerKnuckle,
-        .indexFingerIntermediateBase,
-        .indexFingerIntermediateTip,
-        .indexFingerTip,
-
-        .middleFingerMetacarpal,
-        .middleFingerKnuckle,
-        .middleFingerIntermediateBase,
-        .middleFingerIntermediateTip,
-        .middleFingerTip,
-
-        .ringFingerMetacarpal,
-        .ringFingerKnuckle,
-        .ringFingerIntermediateBase,
-        .ringFingerIntermediateTip,
-        .ringFingerTip,
-
-        .littleFingerMetacarpal,
-        .littleFingerKnuckle,
-        .littleFingerIntermediateBase,
-        .littleFingerIntermediateTip,
-        .littleFingerTip
-    ]
-
-    /// Bone connections (pairs of joints).
-    private lazy var bonePairs: [(HandSkeleton.JointName, HandSkeleton.JointName)] = [
-        (.wrist, .thumbKnuckle),
-        (.thumbKnuckle, .thumbIntermediateBase),
-        (.thumbIntermediateBase, .thumbIntermediateTip),
-        (.thumbIntermediateTip, .thumbTip),
-
-        (.wrist, .indexFingerMetacarpal),
-        (.indexFingerMetacarpal, .indexFingerKnuckle),
-        (.indexFingerKnuckle, .indexFingerIntermediateBase),
-        (.indexFingerIntermediateBase, .indexFingerIntermediateTip),
-        (.indexFingerIntermediateTip, .indexFingerTip),
-
-        (.wrist, .middleFingerMetacarpal),
-        (.middleFingerMetacarpal, .middleFingerKnuckle),
-        (.middleFingerKnuckle, .middleFingerIntermediateBase),
-        (.middleFingerIntermediateBase, .middleFingerIntermediateTip),
-        (.middleFingerIntermediateTip, .middleFingerTip),
-
-        (.wrist, .ringFingerMetacarpal),
-        (.ringFingerMetacarpal, .ringFingerKnuckle),
-        (.ringFingerKnuckle, .ringFingerIntermediateBase),
-        (.ringFingerIntermediateBase, .ringFingerIntermediateTip),
-        (.ringFingerIntermediateTip, .ringFingerTip),
-
-        (.wrist, .littleFingerMetacarpal),
-        (.littleFingerMetacarpal, .littleFingerKnuckle),
-        (.littleFingerKnuckle, .littleFingerIntermediateBase),
-        (.littleFingerIntermediateBase, .littleFingerIntermediateTip),
-        (.littleFingerIntermediateTip, .littleFingerTip)
-    ]
+    /// All joints+bone pairs we care about.
+    private let jointNames = HandTopology.allJoints
+    private let bonePairs = HandTopology.boneEdges
 
     private let label: String
 
